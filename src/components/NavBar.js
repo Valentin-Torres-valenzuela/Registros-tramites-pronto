@@ -1,12 +1,16 @@
 import React from 'react'
+import logo from '../img/tramites.png';
+import Styles from './Styles.css'
 
 const NavBar = () => {
     return ( 
-    <nav className="navbar navbar-expand-lg bg-dark navbar-dark">
-        <div className="container-fluid ">
-            <p className="navbar-brand m-0" href="#">Tramites Pronto</p>
-        </div>
-    </nav>
+    <div>
+        <nav className="navbar navbar-expand-lg navbarc">
+            <div className="container-fluid ">
+                <a href='/' className="navbar-brand m-0"><img src={logo} alt="logo" /></a>
+            </div>
+        </nav>
+    </div>
     );
 }
 

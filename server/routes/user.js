@@ -7,9 +7,12 @@ const eschema = mongoose.Schema;
 
 const eschemaUser = new eschema({
     nombre: String,
-    apellidos: String,
-    email: String,
-    dni: Number,
+    numRecibo: String,
+    servicios: Array,
+    totalPagosEfectuar: Number,
+    arancel: Number,
+    total: Number,
+    fecha: Date,
     idusuario: String
 })
 
@@ -19,9 +22,12 @@ const UserModel = mongoose.model('users', eschemaUser);
 router.post('/adduser', (req, res) => {
     const newUser = new UserModel({
         nombre: req.body.nombre,
-        apellido: req.body.apellido,
-        email: req.body.email,
-        dni: req.body.dni,
+        numRecibo: req.body.numRecibo,
+        servicios: req.body.servicios,
+        totalPagosEfectuar: req.body.totalPagosEfectuar,
+        arancel: req.body.arancel,
+        total: req.body.total,
+        fecha: req.body.fecha,
         id: req.body.id
     })
     newUser.save(function (err) {
@@ -34,21 +40,50 @@ router.post('/adduser', (req, res) => {
 })
 
 // obtener todos los usuarios
-router.get('/obtainuser', (req, res) => {
-    UserModel.find({}, function (docs, err) {
+router.get('/obtainuser', async (req, res) => {
+    const PAGE_SIZE = 15;
+    const page = parseInt(req.query.page || '0');
+    const allUsers = await UserModel.find({});
+    const total = await UserModel.countDocuments({});
+    const users = await UserModel.find({}).limit(PAGE_SIZE).skip(PAGE_SIZE * page);
+    res.json({
+        totalPages: Math.ceil(total / PAGE_SIZE),
+        users,
+        allUsers,
+    });
+    // UserModel.find({}, function (docs, err) {
+    //     if (!err) {
+    //         res.send(docs);
+    //     } else {
+    //         res.send(err);
+    //     }
+    // })
+});
+
+// obtener data de usuario
+router.get('/obtaindatauser/:id', (req, res) => {
+    UserModel.findById(req.params.id, function (docs, err) {
         if (!err) {
-            res.send(docs);
+            res.json(docs);
         } else {
+            console.log(err)
             res.send(err);
         }
     })
 })
 
-// obtener data de usuario
-router.post('/obtaindatauser', (req, res) => {
-    UserModel.find({id:req.body.id}, function (docs, err) {
+router.patch('/updateuser/:id', (req, res) => {
+    UserModel.findByIdAndUpdate(req.params.id, {
+        nombre: req.body.nombre,
+        numRecibo: req.body.numRecibo,
+        servicios: req.body.servicios,
+        totalPagosEfectuar: req.body.totalPagosEfectuar,
+        arancel: req.body.arancel,
+        total: req.body.total,
+        fecha: req.body.fecha
+    }, (err) => {
         if (!err) {
-            res.send(docs);
+            res.send('Usuario actualizado correctamente');
         } else {
             res.send(err);
         }
