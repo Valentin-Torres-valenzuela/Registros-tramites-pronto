@@ -41,23 +41,38 @@ router.post('/adduser', (req, res) => {
 
 // obtener todos los usuarios
 router.get('/obtainuser', async (req, res) => {
-    const PAGE_SIZE = 15;
-    const page = parseInt(req.query.page || '0');
-    const allUsers = await UserModel.find({});
-    const total = await UserModel.countDocuments({});
-    const users = await UserModel.find({}).limit(PAGE_SIZE).skip(PAGE_SIZE * page);
+
+    const {page, nombre, fecha} = req.query
+    const PAGE_SIZE = 20;
+    let allUsers;
+    let totalUsers;
+    let regexName = '.*'+nombre+'.*';
+    const fechaBD = new Date(fecha);
+
+    if (nombre || fecha) {
+        if (nombre && fecha) {
+            console.log("entrooooo", nombre, fechaBD)
+            allUsers = UserModel.find({nombre: {$regex : regexName}, fecha : fechaBD});
+            totalUsers = await UserModel.countDocuments({nombre: {$regex : regexName}, fecha : fechaBD})
+        }
+        if (nombre && !fecha) {
+            allUsers = UserModel.find({nombre: {$regex : regexName}});
+            totalUsers = await UserModel.countDocuments({nombre: {$regex : regexName}})
+        }
+        if (fecha && !nombre) {
+            allUsers = UserModel.find({fecha : fechaBD});
+            totalUsers = await UserModel.countDocuments({fecha : fechaBD})
+        }
+    } else {
+        allUsers = UserModel.find({})
+        totalUsers = await UserModel.countDocuments({})
+    }
+    const users = await allUsers.sort({_id:-1}).limit(PAGE_SIZE).skip(PAGE_SIZE * Number(page || 0));
+    
     res.json({
-        totalPages: Math.ceil(total / PAGE_SIZE),
+        totalPages: Math.ceil(totalUsers / PAGE_SIZE),
         users,
-        allUsers,
     });
-    // UserModel.find({}, function (docs, err) {
-    //     if (!err) {
-    //         res.send(docs);
-    //     } else {
-    //         res.send(err);
-    //     }
-    // })
 });
 
 // obtener data de usuario

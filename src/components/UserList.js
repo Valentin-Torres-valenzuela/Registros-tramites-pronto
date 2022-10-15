@@ -4,76 +4,52 @@ import User from './User';
 
 const UserList = () => {
     
-    const [dataUsuarios, setDatausuarios] = useState([]);
     const [filterUser, setFilterUser] = useState([]);
-    const [error, actualizarError] = useState(false)
-    const [arancel, setArancel] = useState(0);
     const [pageNumber, setPageNumber] = useState(0);
+    const [nombre, setNombre] = useState('');
+    const [fecha, setFecha] = useState('');
     const [numberOfPages, setNumberOfPages] = useState(0);
-
+    
     let arancelTotal = 0;
+    
     const pages = new Array(numberOfPages).fill(null).map((v, i) => i)
     
-    useEffect(() => {
-        axios.get(`/api/user/obtainuser?page=${pageNumber}`)
+    const getData = (page=``) => {
+        axios.get(`/api/user/obtainuser?page=${page}&nombre=${nombre}&fecha=${fecha}`)
         .then(res => {
-            setDatausuarios(res.data.allUsers);
             setFilterUser(res.data.users);
             setNumberOfPages(res.data.totalPages);
         })
-        // .then((res) => res.json())
-        // .then(({totalPages, users}) => {
-        //     setDatausuarios(users);
-        //     setFilterUser(users);
-        //     setNumberOfPages(totalPages);
-        // })
         .catch(err => {
             console.log(err);
         })
-    }, [pageNumber])
+    }
 
-    // console.log(filterUser);
-    // console.log(numberOfPages);
+    useEffect(() => {
+        getData();
+    }, [nombre, fecha])
 
     const usersList = filterUser.map(user => {
+
+        arancelTotal += user.arancel
+
         return (
-            <div>
+            <div className="w-50">
                 <User user={user}/>
             </div>
         )
     })
 
-    const searcher = (e) => {
-        if (e.target.value !== '' || (dataUsuarios.length < filterUser.length)) {
-            filtrar(e.target.value)
-        }
+    const prevPage = () => {
+        const newPage = Math.max(0, pageNumber - 1);
+        setPageNumber(newPage);
+        getData(newPage);
     }
     
-    const filtrar = (termino) => {
-        let resultado = dataUsuarios.filter((user) => user.nombre.toLowerCase().includes(termino.toLowerCase()) || (new Date(user.fecha).getTime() === new Date(termino).getTime()))
-
-        for (let i = 0; i < resultado.length; i++) {
-            arancelTotal += resultado[i].arancel
-            setArancel(parseFloat(arancelTotal));
-        }
-
-        setFilterUser(resultado);
-
-        if (resultado.length === 0) {
-            actualizarError(true);
-            setArancel(0)
-            return;
-        }
-
-        actualizarError(false);
-    }
-
-    const prevPage = () => { 
-        setPageNumber(Math.max(0, pageNumber - 1));
-    }
-
     const nextPage = () => { 
-        setPageNumber(Math.min(numberOfPages - 1, pageNumber + 1));
+        const newPage = Math.min(numberOfPages - 1, pageNumber + 1);
+        setPageNumber(newPage);
+        getData(newPage);
     }
 
     return ( 
@@ -85,32 +61,33 @@ const UserList = () => {
                     <div className="d-flex">
                         <div>
                             <label className="form-label">Nombre / Apellido</label>
-                            <input onChange={searcher} type="text" className="form-control" required/>
+                            <input onChange={e => setNombre(e.target.value)} type="text" className="form-control" required/>
                         </div>
                         <div className="mx-5">
                             <label className="form-label">Fecha desde</label>
-                            <input type="date" onChange={searcher} className="form-control"/>
+                            <input type="date" onChange={e => setFecha(e.target.value)} className="form-control"/>
                         </div>
                     </div>
                         <a href='/crear' className="btn rounded-0 btn-success btn-lg p-2"> Nuevo registro <i className="fa-solid fa-plus"></i></a>
                     </div>
                 </div>
                 <div className="mb-4 d-flex ">
-                    <h4 className="my-3">Arancel total de los registros según busqueda</h4>
-                    <input type="text" value={arancel} disabled className="form-control w-25 mx-4 text-center border-0"/>
+                    <h4 className="my-3">Arancel total de los registros según criterio de busqueda</h4>
+                    <input type="text" value={arancelTotal} disabled className="form-control w-25 mx-4 text-center border-0"/>
                 </div>
 
                 <button onClick={prevPage} className="btn btn-info">Anterior</button>
 
                 {pages.map((pageIndex) => (
-                    <button onClick={() => setPageNumber(pageIndex)} className="btn btn-info m-1">{pageIndex + 1}</button>
+                    <button onClick={() => {setPageNumber(pageIndex); getData(pageIndex)}} className="btn btn-info m-1">{pageIndex + 1}</button>
                 ))}
                 
                 <button onClick={nextPage} className="btn btn-info">Siguiente</button>
 
-                {error ? <p className = "alert alert-warning">No se encontró ningun registro</p> : null}
+                <div className="row d-flex">
+                    {usersList.length !== 0 ? usersList : <p className = "alert alert-warning my-5">No se encontró ningun registro</p>}
+                </div>
             </div>
-            {usersList.reverse()}
         </>
     );
 }

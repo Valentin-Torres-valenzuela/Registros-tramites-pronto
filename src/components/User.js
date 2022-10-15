@@ -59,8 +59,8 @@ const User = ({user}) => {
                             </table>
                         <hr/> */}
                 
-            <div className="container card my-5">
-                <div className='row flex-row'>
+            <div className="card my-3">
+                <div className='row flex-row p-3'>
                     <div className='col-5 d-flex flex-column align-items-center mt-3'>
                         <a className="my-2"><img src={logo} alt="logo" /></a>
                         <i>de Cecilia Noemi Raiola</i>
@@ -71,7 +71,7 @@ const User = ({user}) => {
                     </div>
                     <div className="col-2 d-flex flex-column text-center mt-3 border">
                         <h2 className="h-50">X</h2>
-                        <p className="m-0">Documento no valido como factura</p>
+                        <small className="m-0 ">Documento no valido como factura</small>
                     </div>
                     <div className="col-5 d-flex flex-column text-center mt-3">
                         <p className="m-0">Comprobante de pago por Cuenta y Orden de terceros</p>
@@ -93,12 +93,12 @@ const User = ({user}) => {
                                 <li className="list-group-item w-50"> <strong>I.V.A: </strong></li>
                             </div>
                             <li className="list-group-item w-100"> <strong>Recibimos la suma de $: </strong></li>
-                            <p className="my-0">En concepto de pago de los siguientes servicios, impuestos, contribuciones, etc.</p>
                         </ul>
                     </div>
                     <div className="col-12">
+                        <p className="m-2">En concepto de pago de los siguientes servicios, impuestos, contribuciones, etc:</p>
                         <ul className="list-group w-100">
-                            <li className="list-group-item border-0"> {listaServicios()} </li>
+                            <li className="list-group-item p-0 border-0"> {listaServicios()} </li>
                         </ul>
                     </div>
                     <div className="d-flex col-12 my-3">
