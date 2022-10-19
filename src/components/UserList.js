@@ -1,6 +1,8 @@
 import React, {useState, useEffect} from 'react';
-import axios from 'axios';
+import axios from './axios';
+import { useNavigate } from 'react-router-dom';
 import User from './User';
+import { isAuth } from './Auth';
 
 const UserList = () => {
     
@@ -8,14 +10,15 @@ const UserList = () => {
     const [pageNumber, setPageNumber] = useState(0);
     const [nombre, setNombre] = useState('');
     const [fecha, setFecha] = useState('');
+    const navegar = useNavigate();
     const [numberOfPages, setNumberOfPages] = useState(0);
     
     let arancelTotal = 0;
     
     const pages = new Array(numberOfPages).fill(null).map((v, i) => i)
-    
+
     const getData = (page=``) => {
-        axios.get(`/api/user/obtainuser?page=${page}&nombre=${nombre}&fecha=${fecha}`)
+        axios.get(`user/obtainuser?page=${page}&nombre=${nombre}&fecha=${fecha}`)
         .then(res => {
             setFilterUser(res.data.users);
             setNumberOfPages(res.data.totalPages);
@@ -24,6 +27,17 @@ const UserList = () => {
             console.log(err);
         })
     }
+
+    useEffect(() => {
+        const isInSession = async () => {
+            const hasSession = await isAuth()
+            console.log(hasSession);
+            if(!hasSession) {
+                navegar('/login')
+            }
+        }
+        isInSession()
+    }, [navegar])
 
     useEffect(() => {
         getData();

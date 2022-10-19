@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from './axios';
 import {Link} from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -20,8 +20,19 @@ const EditUser = () => {
     const navegar = useNavigate();
 
     useEffect(() => {
+        const isInSession = async () => {
+            const hasSession = await isAuth()
+            console.log(hasSession);
+            if(!hasSession) {
+                navegar('/login')
+            }
+        }
+        isInSession()
+    }, [navegar])
+
+    useEffect(() => {
         const getUser = async () => {
-            await axios.get('/api/user/obtaindatauser/' + params.id)
+            await axios.get('user/obtaindatauser/' + params.id)
             .then(res => {
                 const dataUser = res.data;
                 setNombre(dataUser.nombre);
@@ -107,7 +118,7 @@ const EditUser = () => {
             total,
         }
 
-        axios.patch(`/api/user/updateuser/${params.id}`, userUpdate)
+        axios.patch(`user/updateuser/${params.id}`, userUpdate)
         .then (res => {
             // alert(res.data)
             Swal.fire('Correcto','Registro editado correctamente')

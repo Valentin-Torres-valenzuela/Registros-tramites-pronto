@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 module.exports = router;
 
+const isAuth = require('../isAuth')
+
 const mongoose = require('mongoose');
 const eschema = mongoose.Schema;
 
@@ -19,7 +21,8 @@ const eschemaUser = new eschema({
 const UserModel = mongoose.model('users', eschemaUser);
 
 // agregar usuarios
-router.post('/adduser', (req, res) => {
+router.post('/adduser', isAuth, async (req, res) => {
+    console.log('holis');
     const newUser = new UserModel({
         nombre: req.body.nombre,
         numRecibo: req.body.numRecibo,
@@ -30,17 +33,16 @@ router.post('/adduser', (req, res) => {
         fecha: req.body.fecha,
         id: req.body.id
     })
-    newUser.save(function (err) {
-        if (!err) {
-            res.send('Registro agregado correctamente');
-        } else{
-            res.send(err);
-        }
-    })
+    try {
+        await newUser.save();
+        res.json(newUser);
+    } catch (error) {
+        res.status(400).json(error);
+    }
 })
 
 // obtener todos los usuarios
-router.get('/obtainuser', async (req, res) => {
+router.get('/obtainuser', isAuth, async (req, res) => {
 
     const {page, nombre, fecha} = req.query
     const PAGE_SIZE = 20;
@@ -76,8 +78,8 @@ router.get('/obtainuser', async (req, res) => {
 });
 
 // obtener data de usuario
-router.get('/obtaindatauser/:id', (req, res) => {
-    UserModel.findById(req.params.id, function (docs, err) {
+router.get('/obtaindatauser/:id', isAuth, async (req, res) => {
+    await UserModel.findById(req.params.id, function (docs, err) {
         if (!err) {
             res.json(docs);
         } else {
@@ -87,8 +89,8 @@ router.get('/obtaindatauser/:id', (req, res) => {
     })
 })
 
-router.patch('/updateuser/:id', (req, res) => {
-    UserModel.findByIdAndUpdate(req.params.id, {
+router.patch('/updateuser/:id', isAuth, async (req, res) => {
+    await UserModel.findByIdAndUpdate(req.params.id, {
         nombre: req.body.nombre,
         numRecibo: req.body.numRecibo,
         servicios: req.body.servicios,

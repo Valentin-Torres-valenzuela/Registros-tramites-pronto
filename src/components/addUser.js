@@ -1,8 +1,7 @@
 import React, {useState} from 'react';
 import uniquid from 'uniquid';
-import axios from 'axios';
+import axios from './axios';
 import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const AddUser = () => {
@@ -18,6 +17,17 @@ const AddUser = () => {
     const  [servicios, setServicios] = useState([]);
     
     const navegar = useNavigate();
+
+    useEffect(() => {
+        const isInSession = async () => {
+            const hasSession = await isAuth()
+            console.log(hasSession);
+            if(!hasSession) {
+                navegar('/login')
+            }
+        }
+        isInSession()
+    }, [navegar])
     
     const crearServicio = servicio => {
 
@@ -52,7 +62,7 @@ const AddUser = () => {
     const serviceList = () => {
         
         return (
-            <table class="table">
+            <table className="table">
                     <thead>
                         <tr>
                         <th scope="col">Servicio</th>
@@ -62,11 +72,11 @@ const AddUser = () => {
                     </thead>
                     <tbody>
                     {servicios.map(service => 
-                        <tr>
+                        <tr key={service.id}>
                             <td>{service.servicio}</td>
                             <td>{service.importe}</td>
                             <td>{service.obs}</td>
-                            <td><button className="btn btn-sm btn-danger h-50"><i class="fa-solid fa-trash" onClick={() => deleteService(service)}></i></button></td>
+                            <td><button className="btn btn-sm btn-danger h-50"><i className="fa-solid fa-trash" onClick={() => deleteService(service)}></i></button></td>
                         </tr>)
                         }
                     </tbody>
@@ -80,7 +90,7 @@ const AddUser = () => {
         setTotalPagosEfectuar(totalPagosEfectuar - Number(_service.importe));
     }
 
-    function addUserF () {
+    async function addUserF () {
         let user = {
             nombre,
             numRecibo,
@@ -92,14 +102,15 @@ const AddUser = () => {
             id: uniquid()
         }
 
-        axios.post('api/user/adduser', user)
-        .then (res => {
-            // alert(res.data)
+        console.log(user);
+
+        try {
+            await axios.post('user/adduser', user)
             Swal.fire('Correcto','Registro credo correctamente')
-            // redireccionar
-            navegar('/');
-        })
-        .catch(error => {console.log(error)})
+            navegar('/')
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     const submitRegistro = (e) => {
@@ -112,9 +123,11 @@ const AddUser = () => {
         
         actualizarError(false);
         
+        actualizarDisabled(true);
+        
         addUserF();
         
-        actualizarDisabled(true);
+        actualizarDisabled(false);
     }
 
 
@@ -128,42 +141,42 @@ const AddUser = () => {
                     <label className="form-label" htmlFor="numRecibo">Número de recibo</label>
                 <div className="d-flex ">
                     <input disabled type="text" className="w-25 form-control rounded-0" value="Nº 0001 - 00"/>
-                    <input type="number" className="form-control w-75 rounded-0" value={numRecibo} onChange={(e) => {setNumRecibo(e.target.value)}} required placeholder="XXXX"/>
+                    <input type="number" className="form-control w-75 rounded-0" onChange={(e) => {setNumRecibo(e.target.value)}} required placeholder="XXXX"/>
                 </div>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="nombre">Nombre y apellido</label>
-                    <input type="text" className="form-control" value={nombre} onChange={(e) => {setNombre(e.target.value)}} required placeholder="Ej: Cecilia Raiola"/>
+                    <input type="text" className="form-control" onChange={(e) => {setNombre(e.target.value)}} required placeholder="Ej: Cecilia Raiola"/>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="fecha">Fecha de carga</label>
-                    <input type="date" className="form-control" value={fecha} onChange={(e) => {setFecha(e.target.value)}}  required/>
+                    <input type="date" className="form-control" onChange={(e) => {setFecha(e.target.value)}}  required/>
                 </div>
                 {serviceList()}
                 <form className="d-flex justify-content-around align-items-end" onSubmit={e => submitServicio(e)}>
                     <div className="mb-3">
                         <label className="form-label" htmlFor="servicios">Servicio</label>
-                        <input type="text" className="form-control" value={servicios.servicio} name="servicio" placeholder="Servicio" required/>
+                        <input type="text" className="form-control" name="servicio" placeholder="Servicio" required/>
                     </div>
                     <div className="mb-3 mx-2">
                         <label className="form-label" htmlFor="servicios">Importe</label>
-                        <input type="number" className="form-control" value={servicios.importe} name="importe" placeholder="importe" required/>
+                        <input type="number" className="form-control" name="importe" placeholder="importe" required/>
                     </div>
                     <div className="mb-3">
                         <label className="form-label" htmlFor="servicios">Observacion</label>
-                        <input type="text" className="form-control" value={servicios.obs} name="obs" placeholder="Observacion" required/>
+                        <input type="text" className="form-control" name="obs" placeholder="Observacion" required/>
                     </div>
                     <div className="mb-3 mx-2">
-                        <button className="btn btn-info h-50"><i class="fa-solid fa-plus"></i></button>
+                        <button className="btn btn-info h-50"><i className="fa-solid fa-plus"></i></button>
                     </div>
                 </form>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="totalPagosEfectuar">Total pagos a efectuar</label>
-                    <input type="number" className="form-control" value={totalPagosEfectuar} disabled required placeholder="Monto total pagos a efectuar"/>
+                    <input type="number" className="form-control" disabled required placeholder="Monto total pagos a efectuar"/>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="arancel">Arancel</label>
-                    <input type="number" className="form-control" value={arancel} onChange={(e) => {setArancel(e.target.value)}} required placeholder="Monto arancel"/>
+                    <input type="number" className="form-control" onChange={(e) => {setArancel(e.target.value)}} required placeholder="Monto arancel"/>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="total">Total</label>

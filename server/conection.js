@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://127.0.0.1:27017/crudmernstack');
+const dotenv = require('dotenv');
+
+dotenv.config();
+const username = process.env.MONGOUSERNAME
+const userpass = process.env.MONGOPASS
+
+mongoose.connect(`mongodb+srv://${username}:${userpass}@tramitespronto.lhncidq.mongodb.net/?retryWrites=true&w=majority`);
 
 const objetobd = mongoose.connection
 

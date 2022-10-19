@@ -8,13 +8,21 @@ const archivoBD = require('./conection');
 
 // importamos rutas y modelo usuario
 const userRoute = require('./routes/user');
+const authRoute = require('./routes/auth');
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(cors())
+//* origin para postman
+const corsOptions = {
+    credentials: true,
+    origin: process.env.APPURL
+}
+
+app.use(cors(corsOptions))
 app.use('/api/user', userRoute);
+app.use('/api/auth', authRoute);
 
 
 app.get('/', (req, res) => {
