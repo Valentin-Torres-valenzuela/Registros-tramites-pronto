@@ -16,17 +16,21 @@ router.post('/', async (req, res) => {
     try {
         const { email, password } = req.body
         
-        if (email !== 'tramitespronto@gmail.com' || password !== '123456') {
+        if (email === 'tramitespronto@gmail.com' && password === 'ceci2022sistem') {
+            
+            const key = process.env.JWT_KEY || ''
+            const token = jwt.sign({msg:'tramites pronto'}, key, {
+                expiresIn:"24h"
+            })
+
+            console.log(token);
+            
+            res.json({message:'Sesion iniciada', token})
+            
+        } else {
             res.status(401).json('Ese usuario no es el usuario maestro');
             return;
         }
-        
-        const key = process.env.JWT_KEY || ''
-        const token = jwt.sign({msg:'tramites pronto'}, key, {
-            expiresIn:"24h"
-        })
-        
-        res.json({message:'Sesion iniciada', token})
         
     } catch (error) {
         console.log(error)

@@ -24,7 +24,6 @@ app.use(cors(corsOptions))
 app.use('/api/user', userRoute);
 app.use('/api/auth', authRoute);
 
-
 app.get('/', (req, res) => {
     res.end('Bienvenidos al server!');
 })

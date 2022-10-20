@@ -43,17 +43,6 @@ const UserList = () => {
         getData();
     }, [nombre, fecha])
 
-    const usersList = filterUser.map(user => {
-
-        arancelTotal += user.arancel
-
-        return (
-            <div className="w-50">
-                <User user={user}/>
-            </div>
-        )
-    })
-
     const prevPage = () => {
         const newPage = Math.max(0, pageNumber - 1);
         setPageNumber(newPage);
@@ -99,7 +88,16 @@ const UserList = () => {
                 <button onClick={nextPage} className="btn btn-info">Siguiente</button>
 
                 <div className="row d-flex">
-                    {usersList.length !== 0 ? usersList : <p className = "alert alert-warning my-5">No se encontró ningun registro</p>}
+                    {filterUser?.length > 0 ?  filterUser.map(user => {
+                        arancelTotal += user.arancel
+
+                        return (
+                            <div className="w-50">
+                                <User user={user}/>
+                            </div>
+                        )
+                        })
+                    : <p className = "alert alert-warning my-5">No se encontró ningun registro</p>}
                 </div>
             </div>
         </>
