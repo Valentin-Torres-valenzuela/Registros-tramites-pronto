@@ -12,7 +12,6 @@ const authRoute = require('./routes/auth');
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 //* origin para postman
 const corsOptions = {
@@ -21,12 +20,11 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.get('/', (req, res) => res.send('Bienvenidos al server!'))
+app.get('/api', (req, res) => res.send('API ONLINE'))
 app.use('/api/user', userRoute);
 app.use('/api/auth', authRoute);
 
-app.get('/', (req, res) => {
-    res.end('Bienvenidos al server!');
-})
 
 //configurar server basico
 
