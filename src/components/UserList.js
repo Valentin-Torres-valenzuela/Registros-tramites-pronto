@@ -12,14 +12,18 @@ const UserList = () => {
     const [fecha, setFecha] = useState('');
     const navegar = useNavigate();
     const [numberOfPages, setNumberOfPages] = useState(0);
-    
-    let arancelTotal = 0;
+    let [arancelTotal, setArancelTotal] = useState(0);
     
     const pages = new Array(numberOfPages).fill(null).map((v, i) => i)
 
     const getData = (page=``) => {
         axios.get(`user/obtainuser?page=${page}&nombre=${nombre}&fecha=${fecha}`)
         .then(res => {
+            let total = 0;
+            res.data.users.forEach(user => {
+            total += user.arancel
+            });
+            setArancelTotal(total);
             setFilterUser(res.data.users);
             setNumberOfPages(res.data.totalPages);
         })
@@ -89,8 +93,6 @@ const UserList = () => {
 
                 <div className="row d-flex">
                     {filterUser?.length > 0 ?  filterUser.map(user => {
-                        arancelTotal += user.arancel
-
                         return (
                             <div className="w-50">
                                 <User user={user}/>
