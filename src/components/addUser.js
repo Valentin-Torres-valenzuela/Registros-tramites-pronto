@@ -147,7 +147,7 @@ const AddUser = () => {
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="nombre">Nombre y apellido</label>
-                    <input type="text" className="form-control" onChange={(e) => {setNombre(e.target.value)}} required placeholder="Ej: Cecilia Raiola"/>
+                    <input type="text" className="form-control" style={{textTransform: 'uppercase'}} onChange={(e) => {setNombre(e.target.value.toUpperCase())}} required placeholder="Ej: Cecilia Raiola"/>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="fecha">Fecha de carga</label>

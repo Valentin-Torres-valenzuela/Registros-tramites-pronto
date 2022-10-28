@@ -68,7 +68,7 @@ const UserList = () => {
                     <div className="d-flex">
                         <div>
                             <label className="form-label">Nombre / Apellido</label>
-                            <input onChange={e => setNombre(e.target.value)} type="text" className="form-control" required/>
+                            <input style={{textTransform: 'uppercase'}} onChange={e => setNombre(e.target.value.toUpperCase())} type="text" className="form-control" required/>
                         </div>
                         <div className="mx-5">
                             <label className="form-label">Fecha desde</label>
@@ -83,13 +83,13 @@ const UserList = () => {
                     <input type="text" value={arancelTotal} disabled className="form-control w-25 mx-4 text-center border-0"/>
                 </div>
 
-                <button onClick={prevPage} className="btn btn-info">Anterior</button>
+                <button onClick={prevPage} className="btn btn-sm btn-info">Anterior</button>
 
                 {pages.map((pageIndex) => (
-                    <button onClick={() => {setPageNumber(pageIndex); getData(pageIndex)}} className="btn btn-info m-1">{pageIndex + 1}</button>
+                    <button onClick={() => {setPageNumber(pageIndex); getData(pageIndex)}} className="btn btn-sm btn-info m-1">{pageIndex + 1}</button>
                 ))}
                 
-                <button onClick={nextPage} className="btn btn-info">Siguiente</button>
+                <button onClick={nextPage} className="btn btn-sm btn-info">Siguiente</button>
 
                 <div className="row d-flex">
                     {filterUser?.length > 0 ?  filterUser.map(user => {
