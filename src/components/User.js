@@ -86,7 +86,7 @@ const User = ({user}) => {
                 </div>
                     <div className="d-flex my-2 col-12">
                         <ul className="list-group w-100">
-                            <li className="list-group-item"> <strong>Nombre y apellido: </strong> {user.nombre.toUpperCase()}</li>
+                            <li className="list-group-item"> <strong>Nombre y apellido: </strong> {user.nombre}</li>
                             <div className="d-flex">
                                 <li className="list-group-item w-50"> <strong>C.U.I.T: </strong></li>
                                 <li className="list-group-item w-50"> <strong>I.V.A: </strong></li>

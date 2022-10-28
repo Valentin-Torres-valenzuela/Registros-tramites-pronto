@@ -24,7 +24,7 @@ const UserModel = mongoose.model('users', eschemaUser);
 router.post('/adduser', isAuth, async (req, res) => {
     console.log('holis');
     const newUser = new UserModel({
-        nombre: req.body.nombre.toUpperCase(),
+        nombre: req.body.nombre,
         numRecibo: req.body.numRecibo,
         servicios: req.body.servicios,
         totalPagosEfectuar: req.body.totalPagosEfectuar,
@@ -91,7 +91,7 @@ router.get('/obtaindatauser/:id', isAuth, async (req, res) => {
 
 router.patch('/updateuser/:id', isAuth, async (req, res) => {
     await UserModel.findByIdAndUpdate(req.params.id, {
-        nombre: req.body.nombre.toUpperCase(),
+        nombre: req.body.nombre,
         numRecibo: req.body.numRecibo,
         servicios: req.body.servicios,
         totalPagosEfectuar: req.body.totalPagosEfectuar,

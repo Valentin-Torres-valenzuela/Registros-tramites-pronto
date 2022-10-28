@@ -68,7 +68,7 @@ const UserList = () => {
                     <div className="d-flex">
                         <div>
                             <label className="form-label">Nombre / Apellido</label>
-                            <input style={{textTransform: 'uppercase'}} onChange={e => setNombre(e.target.value.toUpperCase())} type="text" className="form-control" required/>
+                            <input onChange={e => setNombre(e.target.value)} type="text" className="form-control" required/>
                         </div>
                         <div className="mx-5">
                             <label className="form-label">Fecha desde</label>
