@@ -21,10 +21,10 @@ const User = ({user}) => {
                         <tbody>
                         {user.servicios.map(service => 
                             <tr>
-                                <td>{service.servicio}</td>
-                                <td></td>
-                                <td>{service.importe}</td>
-                                <td>{service.obs}</td>
+                                <td className="p-0">{service.servicio}</td>
+                                <td className="p-0"></td>
+                                <td className="p-0">{service.importe}</td>
+                                <td className="p-0">{service.obs}</td>
                             </tr>)}
                         </tbody>
                 </table>
