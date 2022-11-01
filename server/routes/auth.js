@@ -23,8 +23,6 @@ router.post('/', async (req, res) => {
                 expiresIn:"24h"
             })
 
-            console.log(token);
-            
             res.json({message:'Sesion iniciada', token})
             
         } else {

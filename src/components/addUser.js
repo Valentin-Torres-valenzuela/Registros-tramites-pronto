@@ -173,7 +173,7 @@ const AddUser = () => {
                 </form>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="totalPagosEfectuar">Total pagos a efectuar</label>
-                    <input type="number" className="form-control" disabled required placeholder="Monto total pagos a efectuar"/>
+                    <input type="number" value={totalPagosEfectuar} className="form-control" disabled required placeholder="Monto total pagos a efectuar"/>
                 </div>
                 <div className="mb-3">
                     <label className="form-label" htmlFor="arancel">Arancel</label>

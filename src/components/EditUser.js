@@ -12,7 +12,7 @@ const EditUser = () => {
     const  [nombre, setNombre] = useState('');
     const  [numRecibo, setNumRecibo] = useState('');
     const  [fecha, setFecha] = useState('');
-    const  [totalPagosEfectuar, setTotalPagosEfectuar] = useState();
+    const  [totalPagosEfectuar, setTotalPagosEfectuar] = useState(0);
     const  [arancel, setArancel] = useState();
     const  total = parseFloat(totalPagosEfectuar) + parseFloat(arancel);
     const  [error, actualizarError] = useState(false)
