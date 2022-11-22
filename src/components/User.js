@@ -6,7 +6,6 @@ import Styles from './Styles.css'
 const User = ({user}) => {
 
     let extraida = user.fecha.substring(0, 10)
-
     const listaServicios = () => {
         return (
                 <table class="table table-bordered table-striped m-0">
@@ -63,12 +62,12 @@ const User = ({user}) => {
             <div className="card my-3">
                 <div className='row flex-row p-0'>
                     <div className='col-5 d-flex flex-column align-items-center'>
-                        <a className="my-2"><img src={logo} width="150" alt="logo" /></a>
+                        <a className="my-1"><img src={logo} width="200" alt="logo" /></a>
                         <i>de Cecilia Noemi Raiola</i>
-                        <p className="m-0">Tramitespronto02@gmail.com</p>
-                        <p className="m-0">Moine 1499 (1661) - Bella vista</p>
-                        <p className="m-0">Pcia. de Bs. As - Tel: 4668 - 0908</p>
-                        <p className="m-0">RESPONSABLE MONOTRIBUTO</p>
+                        <p className="m-0 sm">Tramitespronto02@gmail.com</p>
+                        <p className="m-0 sm">Moine 1499 (1661) - Bella vista</p>
+                        <p className="m-0 sm">Pcia. de Bs. As - Tel: 4668 - 0908</p>
+                        <p className="m-0 sm">RESPONSABLE MONOTRIBUTO</p>
                     </div>
                     <div className="col-2 d-flex flex-column text-center border">
                         <h4 className="h-25">X</h4>

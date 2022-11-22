@@ -22,7 +22,6 @@ const UserModel = mongoose.model('users', eschemaUser);
 
 // agregar usuarios
 router.post('/adduser', isAuth, async (req, res) => {
-    console.log('holis');
     const newUser = new UserModel({
         nombre: req.body.nombre,
         numRecibo: req.body.numRecibo,
@@ -44,30 +43,22 @@ router.post('/adduser', isAuth, async (req, res) => {
 // obtener todos los usuarios
 router.get('/obtainuser', isAuth, async (req, res) => {
 
-    const {page, nombre, fecha} = req.query
+    const {page, nombre, fechaD, fechaH} = req.query
     const PAGE_SIZE = 20;
     let allUsers;
     let totalUsers;
     let regexName = '.*'+nombre+'.*';
-    const fechaBD = new Date(fecha);
+    const date = new Date();
+    const fechaBDdesde = fechaD ? new Date(fechaD) : new Date(date.setYear(2021));
+    const fechaBDhasta = fechaH ? new Date(fechaH) : new Date();
+    const fecha = {$gte: fechaBDdesde, $lt:fechaBDhasta};
 
-    if (nombre || fecha) {
-        if (nombre && fecha) {
-            console.log("entrooooo", nombre, fechaBD)
-            allUsers = UserModel.find({nombre: {$regex : regexName}, fecha : fechaBD});
-            totalUsers = await UserModel.countDocuments({nombre: {$regex : regexName}, fecha : fechaBD})
-        }
-        if (nombre && !fecha) {
-            allUsers = UserModel.find({nombre: {$regex : regexName}});
-            totalUsers = await UserModel.countDocuments({nombre: {$regex : regexName}})
-        }
-        if (fecha && !nombre) {
-            allUsers = UserModel.find({fecha : fechaBD});
-            totalUsers = await UserModel.countDocuments({fecha : fechaBD})
-        }
+    if (nombre) {
+        allUsers = UserModel.find({nombre: {$regex : regexName}, fecha});
+        totalUsers = await UserModel.countDocuments({nombre: {$regex : regexName}, fecha})
     } else {
-        allUsers = UserModel.find({})
-        totalUsers = await UserModel.countDocuments({})
+        allUsers = UserModel.find({fecha})
+        totalUsers = await UserModel.countDocuments({fecha})
     }
     const users = await allUsers.sort({_id:-1}).limit(PAGE_SIZE).skip(PAGE_SIZE * Number(page || 0));
     

@@ -9,7 +9,8 @@ const UserList = () => {
     const [filterUser, setFilterUser] = useState([]);
     const [pageNumber, setPageNumber] = useState(0);
     const [nombre, setNombre] = useState('');
-    const [fecha, setFecha] = useState('');
+    const [fechaD, setFechaD] = useState('');
+    const [fechaH, setFechaH] = useState('');
     const navegar = useNavigate();
     const [numberOfPages, setNumberOfPages] = useState(0);
     let [arancelTotal, setArancelTotal] = useState(0);
@@ -17,7 +18,7 @@ const UserList = () => {
     const pages = new Array(numberOfPages).fill(null).map((v, i) => i)
 
     const getData = (page=``) => {
-        axios.get(`user/obtainuser?page=${page}&nombre=${nombre}&fecha=${fecha}`)
+        axios.get(`user/obtainuser?page=${page}&nombre=${nombre}&fechaD=${fechaD}&fechaH=${fechaH}`)
         .then(res => {
             let total = 0;
             res.data.users.forEach(user => {
@@ -35,7 +36,6 @@ const UserList = () => {
     useEffect(() => {
         const isInSession = async () => {
             const hasSession = await isAuth()
-            console.log(hasSession);
             if(!hasSession) {
                 navegar('/login')
             }
@@ -45,7 +45,7 @@ const UserList = () => {
 
     useEffect(() => {
         getData();
-    }, [nombre, fecha])
+    }, [nombre, fechaD, fechaH])
 
     const prevPage = () => {
         const newPage = Math.max(0, pageNumber - 1);
@@ -72,7 +72,11 @@ const UserList = () => {
                         </div>
                         <div className="mx-5">
                             <label className="form-label">Fecha desde</label>
-                            <input type="date" onChange={e => setFecha(e.target.value)} className="form-control"/>
+                            <input type="date" onChange={e => setFechaD(e.target.value)} className="form-control"/>
+                        </div>
+                        <div>
+                            <label className="form-label">Fecha hasta</label>
+                            <input type="date" onChange={e => setFechaH(e.target.value)} className="form-control"/>
                         </div>
                     </div>
                         <a href='/crear' className="btn rounded-0 btn-success btn-lg p-2"> Nuevo registro <i className="fa-solid fa-plus"></i></a>
