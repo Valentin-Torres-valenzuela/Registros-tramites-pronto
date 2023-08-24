@@ -66,7 +66,7 @@ const User = ({user}) => {
                         <i>de Cecilia Noemi Raiola</i>
                         <p className="m-0 sm">Tramitespronto02@gmail.com</p>
                         <p className="m-0 sm">Moine 1499 (1661) - Bella vista</p>
-                        <p className="m-0 sm">Pcia. de Bs. As - <strong>Cel: 11 7144-1320 </strong><i class="fa-brands fa-whatsapp"></i> </p>
+                        <p className="m-0 sm">Pcia. de Bs. As - <strong>Cel: 11 2710-3204 </strong><i class="fa-brands fa-whatsapp"></i> </p>
                         <p className="m-0 sm">RESPONSABLE MONOTRIBUTO</p>
                     </div>
                     <div className="col-2 d-flex flex-column text-center border">
