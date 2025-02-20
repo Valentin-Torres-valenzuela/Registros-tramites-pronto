@@ -1,9 +1,81 @@
 .navbarc {
-    background:#210B65;
+    background: #210B65;
+    height: 60px;
+    display: flex;
+    align-items: center;
 }
+
+/* Estilos para el scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #210B65;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #150740;
+}
+
+/* Para Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #210B65 #f8f9fa;
+}
+
+/* Quitar flechas de inputs numéricos */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 p, li, i { 
     font-size: 12px;
 }
+
 .sm { 
     font-size: 11px;
+}
+
+/* Estilos de impresión */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .bg-white {
+        background-color: white !important;
+    }
+    
+    .text-white {
+        color: white !important;
+    }
+    
+    img {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
 }

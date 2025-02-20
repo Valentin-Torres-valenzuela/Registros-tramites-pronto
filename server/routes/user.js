@@ -15,7 +15,8 @@ const eschemaUser = new eschema({
     arancel: Number,
     total: Number,
     fecha: Date,
-    idusuario: String
+    idusuario: String,
+    id: String
 })
 
 const UserModel = mongoose.model('users', eschemaUser);
@@ -42,7 +43,6 @@ router.post('/adduser', isAuth, async (req, res) => {
 
 // obtener todos los usuarios
 router.get('/obtainuser', isAuth, async (req, res) => {
-
     const {page, nombre, fechaD, fechaH} = req.query
     const PAGE_SIZE = 20;
     let allUsers;
@@ -70,30 +70,70 @@ router.get('/obtainuser', isAuth, async (req, res) => {
 
 // obtener data de usuario
 router.get('/obtaindatauser/:id', isAuth, async (req, res) => {
-    await UserModel.findById(req.params.id, function (docs, err) {
-        if (!err) {
-            res.json(docs);
-        } else {
-            console.log(err)
-            res.send(err);
+    try {
+        const user = await UserModel.findOne({ $or: [{ _id: req.params.id }, { id: req.params.id }] });
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-    })
-})
+        res.json(user);
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        res.status(500).json({ error: 'Error al obtener el usuario' });
+    }
+});
 
 router.patch('/updateuser/:id', isAuth, async (req, res) => {
-    await UserModel.findByIdAndUpdate(req.params.id, {
-        nombre: req.body.nombre,
-        numRecibo: req.body.numRecibo,
-        servicios: req.body.servicios,
-        totalPagosEfectuar: req.body.totalPagosEfectuar,
-        arancel: req.body.arancel,
-        total: req.body.total,
-        fecha: req.body.fecha
-    }, (err) => {
-        if (!err) {
-            res.send('Usuario actualizado correctamente');
-        } else {
-            res.send(err);
+    try {
+        const updatedUser = await UserModel.findOneAndUpdate(
+            { $or: [{ _id: req.params.id }, { id: req.params.id }] },
+            {
+                nombre: req.body.nombre,
+                numRecibo: req.body.numRecibo,
+                servicios: req.body.servicios,
+                totalPagosEfectuar: req.body.totalPagosEfectuar,
+                arancel: req.body.arancel,
+                total: req.body.total,
+                fecha: req.body.fecha
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-    })
-})
+
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Error al actualizar:', error);
+        res.status(500).json({ error: 'Error al actualizar el usuario' });
+    }
+});
+
+// Eliminar usuario
+router.delete('/deleteuser/:id', isAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({ error: 'ID no proporcionado' });
+        }
+
+        // Intentar eliminar usando ambos tipos de ID
+        const deletedUser = await UserModel.findOneAndDelete({ $or: [{ _id: id }, { id: id }] });
+        
+        if (!deletedUser) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.json({ 
+            message: 'Usuario eliminado correctamente',
+            deletedUser 
+        });
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        res.status(500).json({ 
+            error: 'Error al eliminar el usuario',
+            details: error.message 
+        });
+    }
+});

@@ -1,29 +1,29 @@
-import React, {useState, useEffect} from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import axios from './axios';
-import {Link} from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { useNavigate, useParams } from 'react-router-dom';
 import { isAuth } from './Auth';
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import CreatableSelect from 'react-select/creatable';
+import { serviciosPredefinidos } from '../data/servicios';
 
 const EditUser = () => {
-
-    const  params = useParams();
-    const  [nombre, setNombre] = useState('');
-    const  [numRecibo, setNumRecibo] = useState('');
-    const  [fecha, setFecha] = useState('');
-    const  [totalPagosEfectuar, setTotalPagosEfectuar] = useState(0);
-    const  [arancel, setArancel] = useState();
-    const  total = parseFloat(totalPagosEfectuar) + parseFloat(arancel);
-    const  [error, actualizarError] = useState(false)
-    const  [servicios, setServicios] = useState([]);
-
+    const [nombre, setNombre] = useState('');
+    const [numRecibo, setNumRecibo] = useState('');
+    const [servicios, setServicios] = useState([]);
+    const [totalPagosEfectuar, setTotalPagosEfectuar] = useState(0);
+    const [arancel, setArancel] = useState(0);
+    const [total, setTotal] = useState(0);
+    const [fecha, setFecha] = useState(new Date());
+    const [disabled, setDisabled] = useState(false);
+    const [selectedService, setSelectedService] = useState(null);
+    
     const navegar = useNavigate();
+    const { id } = useParams();
 
     useEffect(() => {
         const isInSession = async () => {
             const hasSession = await isAuth()
-            console.log(hasSession);
             if(!hasSession) {
                 navegar('/login')
             }
@@ -32,176 +32,358 @@ const EditUser = () => {
     }, [navegar])
 
     useEffect(() => {
-        const getUser = async () => {
-            await axios.get('user/obtaindatauser/' + params.id)
-            .then(res => {
-                const dataUser = res.data;
-                setNombre(dataUser.nombre);
-                setNumRecibo(dataUser.numRecibo);
-                setFecha(dataUser.fecha);
-                setServicios(dataUser.servicios);
-                setTotalPagosEfectuar(dataUser.totalPagosEfectuar);
-                setArancel(dataUser.arancel);
-            })
-            .catch(err => {console.log(err)});
+        const getUsuario = async () => {
+            try {
+                const res = await axios.get(`user/obtaindatauser/${id}`);
+                const user = res.data;
+                if (user) {
+                    setNombre(user.nombre || '');
+                    setNumRecibo(user.numRecibo || '');
+                    setServicios(user.servicios || []);
+                    setTotalPagosEfectuar(Number(user.totalPagosEfectuar) || 0);
+                    setArancel(Number(user.arancel) || 0);
+                    setTotal(Number(user.total) || 0);
+                    setFecha(user.fecha ? new Date(user.fecha) : new Date());
+                }
+            } catch (error) {
+                console.error('Error al obtener el registro:', error);
+                toast.error('Error al obtener el registro', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    theme: "colored",
+                });
+                setTimeout(() => navegar('/'), 3000);
+            }
+        };
+        if (id) {
+            getUsuario();
         }
-        getUser()
-    }, [params.id])
+    }, [id, navegar]);
 
-    const crearServicio = servicio => {
-
-        setServicios([
-            ...servicios, 
-            servicio
-        ]);
-
-        setTotalPagosEfectuar(totalPagosEfectuar + Number(servicio.importe));
-    }
-    
-    const submitServicio = (e) => {
-        e.preventDefault();
+    const handleServicioChange = (index, field, value) => {
+        const newServicios = [...servicios];
+        newServicios[index][field] = value;
+        setServicios(newServicios);
         
-        const {servicio, importe, obs} = e.target;
-        
-        const _servicio = {
-            servicio:servicio.value,
-            importe: importe.value,
-            obs: obs.value, 
-            id: Date.now(),
+        const nuevoTotal = newServicios.reduce((sum, servicio) => sum + Number(servicio.importe || 0), 0);
+        setTotalPagosEfectuar(nuevoTotal);
+        setTotal(nuevoTotal + Number(arancel));
+    };
+
+    const handleServiceChange = (newValue, actionMeta) => {
+        if (actionMeta.action === 'clear') {
+            setSelectedService(null);
+        } else {
+            setSelectedService(newValue);
         }
-        
-        crearServicio(_servicio);
-        
-        servicio.value = ''
-        importe.value = null
-        obs.value = ''
-    }
-    
-    const serviceList = () => {
-        
-        return (
-            <table class="table">
-                    <thead>
-                        <tr>
-                        <th scope="col">Servicio</th>
-                        <th scope="col">Importe</th>
-                        <th scope="col">Observacion</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {servicios.map(service => 
-                        <tr>
-                            <td>{service.servicio}</td>
-                            <td>{service.importe}</td>
-                            <td>{service.obs}</td>
-                            <td><button className="btn btn-sm btn-danger h-50"><i class="fa-solid fa-trash" onClick={() => deleteService(service)}></i></button></td>
-                        </tr>)
-                        }
-                    </tbody>
-            </table>
-            )
-        }
-        
-    const deleteService = (_service) => {
-        const newServices = servicios.filter(servicio => servicio.id !== _service.id)
-        setServicios(newServices);
-        setTotalPagosEfectuar(totalPagosEfectuar - Number(_service.importe));
-    }
+    };
 
-    const editUser = () => {
-        const userUpdate = {
-            nombre,
-            numRecibo,
-            fecha,
-            servicios,
-            totalPagosEfectuar,
-            arancel,
-            total,
-        }
-
-        axios.patch(`user/updateuser/${params.id}`, userUpdate)
-        .then (res => {
-            // alert(res.data)
-            Swal.fire('Correcto','Registro editado correctamente')
-            // redireccionar
-            navegar('/');
+    const customStyles = {
+        control: (provided) => ({
+            ...provided,
+            minHeight: '31px',
+            height: '31px',
+            borderColor: '#dee2e6'
+        }),
+        valueContainer: (provided) => ({
+            ...provided,
+            height: '31px',
+            padding: '0 6px'
+        }),
+        input: (provided) => ({
+            ...provided,
+            margin: '0px'
+        }),
+        indicatorsContainer: (provided) => ({
+            ...provided,
+            height: '31px'
+        }),
+        option: (provided, state) => ({
+            ...provided,
+            fontSize: '0.875rem',
+            color: state.isSelected ? 'white' : '#210B65',
+            backgroundColor: state.isSelected ? '#210B65' : state.isFocused ? '#f8f9fa' : 'white'
         })
-        .catch(error => {console.log(error)})
-    }
+    };
 
-    const submitRegistroEdit = (e) => {
+    const addServicio = (e) => {
         e.preventDefault();
-
-        if (nombre.trim() === '' || numRecibo.trim() === '' || fecha.trim() === '' || servicios.length === 0 || totalPagosEfectuar <= 0 || arancel === undefined) {
-            actualizarError(true);
+        
+        const formData = new FormData(e.target);
+        const importe = formData.get('importe');
+        const obs = formData.get('obs');
+        
+        let servicioValue = '';
+        if (selectedService) {
+            servicioValue = selectedService.value || selectedService.inputValue;
+        }
+        
+        if (!servicioValue) {
+            toast.error('Debe seleccionar o escribir un servicio', {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "colored",
+            });
             return;
         }
+
+        const newServicio = {
+            servicio: servicioValue.toUpperCase(),
+            importe: Number(importe),
+            obs: obs || 'N/A',
+            id: Date.now()
+        };
+
+        const nuevosServicios = [...servicios, newServicio];
+        setServicios(nuevosServicios);
+
+        const nuevoTotalPagos = nuevosServicios.reduce((sum, serv) => sum + Number(serv.importe || 0), 0);
+        setTotalPagosEfectuar(nuevoTotalPagos);
+        setTotal(nuevoTotalPagos + Number(arancel));
+
+        // Reset form
+        setSelectedService(null);
+        e.target.reset();
+    };
+
+    const removeServicio = (index) => {
+        const nuevosServicios = servicios.filter((_, i) => i !== index);
+        setServicios(nuevosServicios);
         
-        actualizarError(false);
+        const nuevoTotalPagos = nuevosServicios.reduce((sum, servicio) => sum + Number(servicio.importe || 0), 0);
+        setTotalPagosEfectuar(nuevoTotalPagos);
+        setTotal(nuevoTotalPagos + Number(arancel));
+    };
 
-        editUser()
-    }
+    const editUser = async (e) => {
+        e.preventDefault();
+        
+        if (nombre.trim() === '' || numRecibo.trim() === '' || servicios.length === 0) {
+            toast.error('Todos los campos son obligatorios', {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "colored",
+            });
+            return;
+        }
 
-    return ( 
-        <>
-            <div className="container">
-                <div className="row">
-                    <h4 className="mt-3">Editar usuario</h4>
-                    {error ? <p className = "alert alert-danger my-4">Todos los campos son obligatorios</p> : null}
-                    <div className="col-sm-6 offset-3">
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="numRecibo">Número de recibo</label>
-                        <div className="d-flex ">
-                            <input disabled type="text" className="w-25 form-control rounded-0" value="Nº 0001 - 00"/>
-                            <input type="number" className="form-control w-75 rounded-0" value={numRecibo} onChange={(e) => {setNumRecibo(e.target.value)}} required placeholder="XXXX"/>
-                        </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="nombre">Nombre y apellido</label>
-                            <input type="text" className="form-control" value={nombre} onChange={(e) => {setNombre(e.target.value)}} required placeholder="Ej: Cecilia Raiola"/>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="fecha">Fecha de carga</label>
-                            <input type="date" className="form-control" value={fecha} onChange={(e) => {setFecha(e.target.value)}}  required/>
-                        </div>
-                        {serviceList()}
-                        <form className="d-flex justify-content-around align-items-end" onSubmit={e => submitServicio(e)}>
+        setDisabled(true);
+        
+        const updatedUser = {
+            nombre: nombre.trim(),
+            numRecibo: numRecibo.trim(),
+            servicios: servicios.map(s => ({
+                ...s,
+                importe: Number(s.importe)
+            })),
+            totalPagosEfectuar: Number(totalPagosEfectuar),
+            arancel: Number(arancel),
+            total: Number(total),
+            fecha: fecha.toISOString()
+        };
+
+        try {
+            await axios.patch(`user/updateuser/${id}`, updatedUser);
+            toast.success('Factura editada correctamente', {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "colored",
+            });
+            setTimeout(() => {
+                navegar('/');
+            }, 2000);
+        } catch (error) {
+            console.error('Error al editar:', error);
+            toast.error('Error al editar la factura', {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "colored",
+            });
+            setDisabled(false);
+        }
+    };
+
+    return (
+        <div className="container py-3">
+            <ToastContainer />
+            <div className="row">
+                <div className="col-12 col-lg-8 offset-lg-2">
+                    <div className="card shadow-sm border-0">
+                        <div className="card-body p-3">
                             <div className="mb-3">
-                                <label className="form-label" htmlFor="servicios">Servicio</label>
-                                <input type="text" className="form-control" value={servicios.servicio} name="servicio" placeholder="Servicio" required/>
-                            </div>
-                            <div className="mb-3 mx-2">
-                                <label className="form-label" htmlFor="servicios">Importe</label>
-                                <input type="number" className="form-control" value={servicios.importe} name="importe" placeholder="importe" required/>
+                                <label className="form-label" style={{color: '#210B65'}} htmlFor="numRecibo">Número de recibo</label>
+                                <div className="d-flex">
+                                    <input disabled type="text" 
+                                        className="form-control rounded-0" 
+                                        style={{
+                                            backgroundColor: '#e9ecef',
+                                            width: '130px'
+                                        }}
+                                        value="Nº 0001 - 00"/>
+                                    <input type="number" className="form-control rounded-0 border-secondary" 
+                                        value={numRecibo}
+                                        onChange={(e) => {setNumRecibo(e.target.value)}} 
+                                        maxLength="5"
+                                        onInput={(e) => {
+                                            if (e.target.value.length > 5)
+                                                e.target.value = e.target.value.slice(0,5);
+                                        }}
+                                        disabled
+                                        required placeholder="XXXXX"/>
+                                </div>
                             </div>
                             <div className="mb-3">
-                                <label className="form-label" htmlFor="servicios">Observacion</label>
-                                <input type="text" className="form-control" value={servicios.obs} name="obs" placeholder="Observacion" required/>
+                                <label className="form-label" style={{color: '#210B65'}} htmlFor="nombre">Nombre y apellido</label>
+                                <input type="text" className="form-control border-secondary text-uppercase" 
+                                    value={nombre}
+                                    onChange={(e) => setNombre(e.target.value.toUpperCase())} 
+                                    required placeholder="Ej: CECILIA RAIOLA"/>
                             </div>
-                            <div className="mb-3 mx-2">
-                                <button className="btn btn-info h-50"><i class="fa-solid fa-plus"></i></button>
+                            <div className="mb-3">
+                                <label className="form-label" style={{color: '#210B65'}} htmlFor="fecha">Fecha de carga</label>
+                                <input type="date" className="form-control border-secondary" 
+                                    value={fecha.toISOString().split('T')[0]}
+                                    onChange={(e) => setFecha(new Date(e.target.value))} 
+                                    required/>
                             </div>
-                        </form>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="totalPagosEfectuar">Total pagos a efectuar</label>
-                            <input type="number" className="form-control" value={totalPagosEfectuar} disabled required placeholder="Monto total pagos a efectuar"/>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="arancel">Arancel</label>
-                            <input type="number" className="form-control" value={arancel} onChange={(e) => {setArancel(e.target.value)}} required placeholder="Monto arancel"/>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="total">Total</label>
-                            <input type="number" className="form-control" value={total} disabled />
-                        </div>
 
-                        <button className="btn btn-success m-3" onClick={submitRegistroEdit}>Editar</button>
-                        <button onClick={e => window.history.back()} className="btn btn-danger m-3">Cancelar</button>
+                            <div className="card mb-3">
+                                <div className="card-header py-2" style={{backgroundColor: '#210B65'}}>
+                                    <h6 className="mb-0 text-white">Lista de Servicios</h6>
+                                </div>
+                                <div className="card-body p-0">
+                                    <div className="table-responsive" style={{height: '250px'}}>
+                                        <table className="table table-hover mb-0">
+                                            <thead style={{backgroundColor: '#f8f9fa'}}>
+                                                <tr>
+                                                    <th scope="col" className="px-3">Servicio</th>
+                                                    <th scope="col" className="px-3">Importe</th>
+                                                    <th scope="col" className="px-3">Observación</th>
+                                                    <th scope="col" className="px-3">Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {servicios.map((servicio, index) => (
+                                                    <tr key={servicio.id || index}>
+                                                        <td className="px-3">{servicio.servicio}</td>
+                                                        <td className="px-3">{servicio.importe}</td>
+                                                        <td className="px-3">{servicio.obs}</td>
+                                                        <td className="px-3">
+                                                            <button className="btn btn-sm text-danger" onClick={() => removeServicio(index)}>
+                                                                <i className="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form className="card mb-3 p-3" style={{backgroundColor: '#f8f9fa'}} onSubmit={addServicio}>
+                                <div className="row g-2">
+                                    <div className="col-12 col-sm-4">
+                                        <label className="form-label small" style={{color: '#210B65'}} htmlFor="servicios">Servicio</label>
+                                        <CreatableSelect
+                                            name="servicio"
+                                            options={serviciosPredefinidos}
+                                            styles={customStyles}
+                                            placeholder="Seleccione o escriba..."
+                                            noOptionsMessage={() => "No se encontraron servicios"}
+                                            isClearable
+                                            isSearchable
+                                            formatCreateLabel={(inputValue) => `Crear "${inputValue.toUpperCase()}"`}
+                                            onInputChange={(inputValue) => inputValue.toUpperCase()}
+                                            onChange={handleServiceChange}
+                                            value={selectedService}
+                                            className="react-select-container"
+                                            classNamePrefix="react-select"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-12 col-sm-3">
+                                        <label className="form-label small" style={{color: '#210B65'}} htmlFor="servicios">Importe</label>
+                                        <input type="number" className="form-control form-control-sm border-secondary" 
+                                            name="importe" placeholder="Importe" required/>
+                                    </div>
+                                    <div className="col-12 col-sm-4">
+                                        <label className="form-label small" style={{color: '#210B65'}} htmlFor="servicios">Observación</label>
+                                        <input type="text" className="form-control form-control-sm border-secondary" 
+                                            name="obs" placeholder="Observación" defaultValue="N/A" required/>
+                                    </div>
+                                    <div className="col-12 col-sm-1 d-flex align-items-end">
+                                        <button className="btn btn-sm w-100" style={{backgroundColor: '#210B65', color: 'white'}}>
+                                            <i className="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div className="row g-2 mb-3">
+                                <div className="col-12 col-sm-4">
+                                    <label className="form-label small" style={{color: '#210B65'}} htmlFor="totalPagosEfectuar">Total pagos a efectuar</label>
+                                    <input type="number" value={totalPagosEfectuar} 
+                                        className="form-control form-control-sm" 
+                                        style={{backgroundColor: '#e9ecef'}}
+                                        disabled required 
+                                        placeholder="Monto total pagos a efectuar"/>
+                                </div>
+                                <div className="col-12 col-sm-4">
+                                    <label className="form-label small" style={{color: '#210B65'}} htmlFor="arancel">Arancel</label>
+                                    <input type="number" className="form-control form-control-sm border-secondary" 
+                                        value={arancel}
+                                        onChange={(e) => {
+                                            setArancel(e.target.value);
+                                            setTotal(totalPagosEfectuar + Number(e.target.value));
+                                        }} 
+                                        required placeholder="Monto arancel"/>
+                                </div>
+                                <div className="col-12 col-sm-4">
+                                    <label className="form-label small" style={{color: '#210B65'}} htmlFor="total">Total</label>
+                                    <input type="number" 
+                                        className="form-control form-control-sm text-white" 
+                                        style={{
+                                            backgroundColor: '#210B65',
+                                            color: 'white !important',
+                                            caretColor: 'white'
+                                        }}
+                                        value={total} 
+                                        disabled />
+                                </div>
+                            </div>
+
+                            <div className="d-flex gap-2 justify-content-end">
+                                <button onClick={() => navegar('/')} 
+                                    className="btn btn-sm btn-outline-secondary"
+                                    style={{width: '100px'}}>
+                                    Cancelar
+                                </button>
+                                <button 
+                                    className="btn btn-sm"
+                                    style={{
+                                        backgroundColor: disabled ? '#6c757d' : '#210B65', 
+                                        color: 'white',
+                                        width: '100px'
+                                    }} 
+                                    onClick={editUser}
+                                    disabled={disabled}>
+                                    {disabled ? (
+                                        <div className="d-flex align-items-center justify-content-center gap-2">
+                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <span>Guardando...</span>
+                                        </div>
+                                    ) : (
+                                        'Actualizar'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
-}
+};
 
-export default EditUser;
+export default EditUser; 

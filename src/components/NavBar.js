@@ -4,13 +4,15 @@ import Styles from './Styles.css'
 
 const NavBar = () => {
     return ( 
-    <div>
-        <nav className="navbar navbar-expand-lg navbarc">
-            <div className="container-fluid ">
-                <a href='/' className="navbar-brand m-0"><img src={logo} alt="logo" /></a>
-            </div>
-        </nav>
-    </div>
+        <div>
+            <nav className="navbar navbar-expand-lg navbarc">
+                <div className="container-fluid d-flex justify-content-center">
+                    <a href='/' className="navbar-brand m-0">
+                        <img src={logo} alt="logo" className="img-fluid" style={{height: '40px'}} />
+                    </a>
+                </div>
+            </nav>
+        </div>
     );
 }
 
