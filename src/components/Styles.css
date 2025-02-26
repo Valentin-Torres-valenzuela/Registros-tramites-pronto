@@ -21,6 +21,11 @@
     border-radius: 4px;
 }
 
+.num_recibo {
+    font-size: 16px;
+    font-weight: bold;
+}
+
 ::-webkit-scrollbar-thumb:hover {
     background: #150740;
 }
@@ -50,32 +55,226 @@ p, li, i {
     font-size: 11px;
 }
 
-/* Estilos de impresión */
+/* Estilos para la impresión */
 @media print {
-    .no-print {
-        display: none !important;
+    /* Ocultar todo excepto las facturas seleccionadas */
+    body * {
+        visibility: hidden;
     }
-    
-    body {
+
+    /* Mostrar solo las facturas seleccionadas */
+    .selected-invoice, .selected-invoice * {
+        visibility: visible !important;
+    }
+
+    /* Ajustes de página */
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    /* Estilos para asegurar que los colores se impriman */
+    * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    
-    .card {
-        border: none !important;
-        box-shadow: none !important;
+
+    /* Ajustar el tamaño del contenido */
+    .selected-invoice {
+        transform: scale(1);
+        transform-origin: top left;
+        page-break-inside: avoid;
     }
-    
+
+    /* Ocultar botones */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Grid container para las facturas */
+    .row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: 1fr 1fr !important;
+        gap: 5mm !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Estilos para las facturas seleccionadas */
+    .col-12 {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 5mm !important;
+        margin: 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .selected-invoice {
+        height: calc(100vh / 2 - 15mm) !important;
+        margin: 0 !important;
+        border: none !important;
+        background-color: white !important;
+    }
+
+    /* Mantener colores y estilos visuales */
     .bg-white {
         background-color: white !important;
     }
-    
+
     .text-white {
         color: white !important;
     }
-    
-    img {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
+
+    [style*="background-color"] {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Ajustar escala del contenido */
+    .selected-invoice > div {
+        transform: scale(0.7);
+        transform-origin: top left;
+    }
+}
+
+/* Estilos normales (fuera de @media print) */
+.selected-invoice {
+    position: relative;
+    border: 2px solid #210B65 !important;
+}
+
+.form-check-input {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+.form-check-input:checked {
+    background-color: #210B65 !important;
+    border-color: #210B65 !important;
+}
+
+/* Clase para ocultar elementos en la impresión */
+.print-hide {
+    display: block;
+}
+
+/* Contenedor de impresión en vista normal */
+.print-content {
+    width: 100%;
+}
+
+@media print {
+    .print-hide,
+    .form-check-input,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Resetear estilos de página */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Ocultar todo excepto las facturas seleccionadas */
+    body > *:not(.container),
+    .container > *:not(.card),
+    .card > *:not(.card-body),
+    .card-body > *:not(.row),
+    .row > *:not(.col-12) {
+        display: none !important;
+    }
+
+    /* Contenedor principal */
+    .container {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Resetear estilos de la card */
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+    }
+
+    .card-body {
+        padding: 0 !important;
+    }
+
+    /* Grid container para las facturas */
+    .row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(2, 1fr) !important;
+        gap: 0 !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Ocultar facturas no seleccionadas */
+    .col-12:not(:has(.selected-invoice)) {
+        display: none !important;
+    }
+
+    /* Estilos para las facturas seleccionadas */
+    .col-12 {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 5mm !important;
+        margin: 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .selected-invoice {
+        height: calc(100vh / 2 - 10mm) !important;
+        margin: 0 !important;
+        border: none !important;
+        background-color: white !important;
+    }
+
+    /* Ajuste para cuando solo hay 2 facturas */
+    .row:has(.selected-invoice:nth-child(2):last-child) {
+        grid-template-rows: 1fr !important;
+        height: 50vh !important;
+    }
+
+    /* Mantener colores y estilos visuales */
+    .bg-white {
+        background-color: white !important;
+    }
+
+    .text-white {
+        color: white !important;
+    }
+
+    [style*="background-color"] {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Ajustar escala del contenido */
+    .selected-invoice > div {
+        transform: scale(0.65);
+        transform-origin: top left;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
     }
 }

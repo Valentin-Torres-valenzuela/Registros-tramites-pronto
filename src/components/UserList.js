@@ -1,9 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useMemo, useCallback} from 'react';
 import axios from './axios';
 import { useNavigate } from 'react-router-dom';
 import User from './User';
 import { isAuth } from './Auth';
 import Swal from 'sweetalert2';
+import { useReactToPrint } from 'react-to-print';
+import printJS from 'print-js';
+import html2canvas from 'html2canvas';
 
 const UserList = () => {
     
@@ -12,9 +15,12 @@ const UserList = () => {
     const [nombre, setNombre] = useState('');
     const [fechaD, setFechaD] = useState('');
     const [fechaH, setFechaH] = useState('');
+    const [selectedInvoices, setSelectedInvoices] = useState([]);
+    const [isPrinting, setIsPrinting] = useState(false);
     const navegar = useNavigate();
     const [numberOfPages, setNumberOfPages] = useState(0);
     let [arancelTotal, setArancelTotal] = useState(0);
+    const componentRef = useRef();
     
     // Función para generar el rango de páginas a mostrar
     const getPageRange = () => {
@@ -61,7 +67,8 @@ const UserList = () => {
         return range;
     };
 
-    const getData = (page=``) => {
+    // Memoizar la función getData para evitar recreaciones innecesarias
+    const getData = useCallback((page='') => {
         axios.get(`user/obtainuser?page=${page}&nombre=${nombre}&fechaD=${fechaD}&fechaH=${fechaH}`)
         .then(res => {
             let total = 0;
@@ -75,7 +82,22 @@ const UserList = () => {
         .catch(err => {
             console.log(err);
         })
-    }
+    }, [nombre, fechaD, fechaH]);
+
+    // Memoizar los usuarios filtrados para impresión
+    const selectedUsersForPrint = useMemo(() => 
+        filterUser?.filter(user => selectedInvoices.includes(user._id || user.id)),
+        [filterUser, selectedInvoices]
+    );
+
+    // Efecto para manejar la búsqueda con debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            getData();
+        }, 300); // debounce de 300ms
+
+        return () => clearTimeout(timer);
+    }, [getData]);
 
     useEffect(() => {
         const isInSession = async () => {
@@ -105,7 +127,14 @@ const UserList = () => {
 
     const handleDelete = async (userId) => {
         try {
-            await axios.delete(`user/deleteuser/${userId}`);
+            await axios.delete(`user/deleteuser/${userId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            // Si llegamos aquí, la eliminación fue exitosa
             Swal.fire({
                 title: '¡Eliminado!',
                 text: 'El registro ha sido eliminado.',
@@ -113,17 +142,137 @@ const UserList = () => {
                 timer: 2000,
                 showConfirmButton: false
             });
-            getData(); // Actualizar la lista después de eliminar
+
+            // Actualizar el estado local en lugar de hacer una nueva petición
+            setFilterUser(prevUsers => prevUsers.filter(user => user._id !== userId && user.id !== userId));
+            
+            // Recalcular el arancel total
+            setArancelTotal(prevTotal => {
+                const deletedUser = filterUser.find(user => user._id === userId || user.id === userId);
+                return deletedUser ? prevTotal - deletedUser.arancel : prevTotal;
+            });
+
+            // Si la página actual queda vacía y no es la primera página, ir a la página anterior
+            if (filterUser.length === 1 && pageNumber > 0) {
+                const newPage = pageNumber - 1;
+                setPageNumber(newPage);
+                getData(newPage);
+            } else if (filterUser.length === 1 && pageNumber === 0) {
+                getData(0); // Si es la primera página, recargar
+            }
+
         } catch (error) {
             console.error('Error al eliminar:', error);
+            
+            // Si el error es 404, significa que ya fue eliminado
+            if (error.response?.status === 404) {
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: 'El registro ya ha sido eliminado.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Actualizar el estado local
+                setFilterUser(prevUsers => prevUsers.filter(user => user._id !== userId && user.id !== userId));
+                return;
+            }
+            
+            // Para otros errores
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.message || 
+                               'No se pudo eliminar el registro.';
+            
             Swal.fire({
                 title: 'Error',
-                text: 'No se pudo eliminar el registro.',
+                text: errorMessage,
+                icon: 'error',
+                timer: 3000,
+                showConfirmButton: true
+            });
+        }
+    };
+
+    // Memoizar la función de manejo de selección
+    const handleInvoiceSelection = useCallback((userId, isSelected) => {
+        if (isSelected) {
+            if (selectedInvoices.length >= 4) {
+                Swal.fire({
+                    title: 'Límite alcanzado',
+                    text: 'Solo puedes seleccionar hasta 4 facturas para imprimir',
+                    icon: 'warning',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return false;
+            }
+            setSelectedInvoices(prev => [...prev, userId]);
+        } else {
+            setSelectedInvoices(prev => prev.filter(id => id !== userId));
+        }
+        return true;
+    }, [selectedInvoices.length]);
+
+    // Función para imprimir las facturas seleccionadas usando html2canvas
+    const printSelectedInvoices = async () => {
+        const canvasPromises = selectedInvoices.map(id => {
+            const element = document.querySelector(`#invoice-${id}`);
+            if (element) {
+                return html2canvas(element, { scale: 1 });
+            }
+            return Promise.resolve(null);
+        });
+
+        const canvases = await Promise.all(canvasPromises);
+        const validCanvases = canvases.filter(canvas => canvas !== null);
+
+        if (validCanvases.length === 0) {
+            Swal.fire({
+                title: 'Error',
+                text: 'No se encontraron facturas para imprimir',
                 icon: 'error',
                 timer: 2000,
                 showConfirmButton: false
             });
+            return;
         }
+
+        const collageCanvas = document.createElement('canvas');
+        const context = collageCanvas.getContext('2d');
+        const width = validCanvases[0].width;
+        const height = validCanvases[0].height;
+        collageCanvas.width = width * 2;
+        collageCanvas.height = height * 2;
+
+        validCanvases.forEach((canvas, index) => {
+            const x = (index % 2) * width;
+            const y = Math.floor(index / 2) * height;
+            context.drawImage(canvas, x, y, width, height);
+        });
+
+        const collageDataUrl = collageCanvas.toDataURL('image/png');
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Facturas Seleccionadas</title>
+            </head>
+            <body style="margin: 0;">
+                <img src="${collageDataUrl}" style="width: 100%; height: auto;" />
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    };
+
+    // Función para limpiar la selección
+    const clearSelection = () => {
+        setSelectedInvoices([]);
     };
 
     const Pagination = () => (
@@ -218,10 +367,65 @@ const UserList = () => {
 
     return ( 
         <>
-            <div className="container py-3 px-2 px-sm-3">
+            {/* Componente de impresión */}
+            <div style={{ display: 'none' }}>
+                <div ref={componentRef} style={{ padding: '20px' }}>
+                    {selectedUsersForPrint.map((user, index) => (
+                        <div key={user.id} style={{ 
+                            pageBreakInside: 'avoid',
+                            marginBottom: '20px'
+                        }}>
+                            <User 
+                                user={user} 
+                                onDelete={handleDelete}
+                                onSelect={handleInvoiceSelection}
+                                isSelected={true}
+                                selectedCount={selectedInvoices.length}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Contenido normal */}
+            <div className="container py-3 px-2 px-sm-3" style={{ 
+                opacity: isPrinting ? 0.5 : 1,
+                pointerEvents: isPrinting ? 'none' : 'auto' 
+            }}>
                 <div className="card shadow-sm border-0">
                     <div className="card-body p-2 p-sm-3">
-                        <div className="row mb-4">
+                        {/* Botones de impresión */}
+                        <div className="row mb-3 no-print">
+                            <div className="col-12">
+                                <div className="d-flex gap-2 align-items-center">
+                                    {/*
+                                    <button 
+                                        onClick={printSelectedInvoices}
+                                        className="btn btn-sm"
+                                        style={{
+                                            backgroundColor: selectedInvoices.length > 0 ? '#210B65' : '#6c757d',
+                                            color: 'white'
+                                        }}
+                                        disabled={selectedInvoices.length === 0}
+                                    >
+                                        <i className="fa-solid fa-print me-2"></i>
+                                        Imprimir seleccionadas ({selectedInvoices.length})
+                                    </button>
+                                    */}
+                                    {selectedInvoices.length > 0 && (
+                                        <button 
+                                            onClick={clearSelection}
+                                            className="btn btn-sm btn-outline-secondary"
+                                        >
+                                            <i className="fa-solid fa-times me-2"></i>
+                                            Limpiar selección
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="row mb-4 no-print">
                             <div className="col-12">
                                 <h5 className="mb-3" style={{color: '#210B65'}}>Filtros de búsqueda</h5>
                                 <div className="row g-3">
@@ -333,11 +537,18 @@ const UserList = () => {
 
                         <Pagination />
 
+                        {/* Vista normal de las facturas */}
                         <div className="row px-0 px-sm-4 py-4" style={{backgroundColor: '#F8F9FA'}}>
                             {filterUser?.length > 0 ? (
                                 filterUser.map(user => (
                                     <div key={user.id} className="col-12 col-xl-6 px-0 px-sm-2 mb-4 mb-xl-5">
-                                        <User user={user} onDelete={handleDelete}/>
+                                        <User 
+                                            user={user} 
+                                            onDelete={handleDelete}
+                                            onSelect={handleInvoiceSelection}
+                                            isSelected={selectedInvoices.includes(user._id || user.id)}
+                                            selectedCount={selectedInvoices.length}
+                                        />
                                     </div>
                                 ))
                             ) : (

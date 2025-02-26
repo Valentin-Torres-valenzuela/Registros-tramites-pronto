@@ -8,7 +8,7 @@ const NavBar = () => {
             <nav className="navbar navbar-expand-lg navbarc">
                 <div className="container-fluid d-flex justify-content-center">
                     <a href='/' className="navbar-brand m-0">
-                        <img src={logo} alt="logo" className="img-fluid" style={{height: '40px'}} />
+                        <img src={logo} alt="logo" className="img-fluid" style={{height: '50px', backgroundColor: 'white'}} />
                     </a>
                 </div>
             </nav>

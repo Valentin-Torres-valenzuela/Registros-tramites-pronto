@@ -6,6 +6,7 @@ const isAuth = require('../isAuth')
 
 const mongoose = require('mongoose');
 const eschema = mongoose.Schema;
+const nodemailer = require('nodemailer');
 
 const eschemaUser = new eschema({
     nombre: String,
@@ -20,6 +21,15 @@ const eschemaUser = new eschema({
 })
 
 const UserModel = mongoose.model('users', eschemaUser);
+
+// Configurar el transporter de nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 // agregar usuarios
 router.post('/adduser', isAuth, async (req, res) => {
@@ -115,25 +125,71 @@ router.delete('/deleteuser/:id', isAuth, async (req, res) => {
         const { id } = req.params;
         
         if (!id) {
+            console.log('Error: ID no proporcionado');
             return res.status(400).json({ error: 'ID no proporcionado' });
         }
 
+        console.log('Intentando eliminar usuario con ID:', id);
+
         // Intentar eliminar usando ambos tipos de ID
-        const deletedUser = await UserModel.findOneAndDelete({ $or: [{ _id: id }, { id: id }] });
+        const deletedUser = await UserModel.findOneAndDelete({ 
+            $or: [
+                { _id: mongoose.Types.ObjectId.isValid(id) ? id : null }, 
+                { id: id }
+            ] 
+        });
         
         if (!deletedUser) {
+            console.log('Error: Usuario no encontrado para ID:', id);
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
+        console.log('Usuario eliminado correctamente:', deletedUser);
         res.json({ 
+            success: true,
             message: 'Usuario eliminado correctamente',
             deletedUser 
         });
     } catch (error) {
-        console.error('Error al eliminar usuario:', error);
+        console.error('Error detallado al eliminar usuario:', error);
         res.status(500).json({ 
+            success: false,
             error: 'Error al eliminar el usuario',
             details: error.message 
+        });
+    }
+});
+
+// Modificar la ruta para enviar email (quitar el isAuth temporalmente para pruebas)
+router.post('/send-pdf', async (req, res) => {
+    const { pdfBase64, email, userName } = req.body;
+    
+    try {
+        console.log('Intentando enviar email a:', email); // Para debug
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: `Factura - ${userName}`,
+            text: 'Adjunto encontrará su factura.',
+            attachments: [
+                {
+                    filename: `factura-${userName}.pdf`,
+                    content: pdfBase64.split('base64,')[1],
+                    encoding: 'base64'
+                }
+            ]
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Email enviado correctamente'); // Para debug
+        res.json({ success: true, message: 'Email enviado correctamente' });
+    } catch (error) {
+        console.error('Error detallado al enviar email:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error al enviar el email',
+            error: error.message 
         });
     }
 });

@@ -130,7 +130,7 @@ const EditUser = () => {
         const newServicio = {
             servicio: servicioValue.toUpperCase(),
             importe: Number(importe),
-            obs: obs || 'N/A',
+            obs: obs || '',
             id: Date.now()
         };
 
@@ -299,7 +299,6 @@ const EditUser = () => {
                                             value={selectedService}
                                             className="react-select-container"
                                             classNamePrefix="react-select"
-                                            required
                                         />
                                     </div>
                                     <div className="col-12 col-sm-3">
@@ -310,7 +309,7 @@ const EditUser = () => {
                                     <div className="col-12 col-sm-4">
                                         <label className="form-label small" style={{color: '#210B65'}} htmlFor="servicios">Observación</label>
                                         <input type="text" className="form-control form-control-sm border-secondary" 
-                                            name="obs" placeholder="Observación" defaultValue="N/A" required/>
+                                            name="obs" placeholder="Observación"/>
                                     </div>
                                     <div className="col-12 col-sm-1 d-flex align-items-end">
                                         <button className="btn btn-sm w-100" style={{backgroundColor: '#210B65', color: 'white'}}>
